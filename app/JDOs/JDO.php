@@ -55,7 +55,7 @@ class JDO extends \PDOStatement
                 'created_at' => '2020-01-02 11:12:00',
                 'updated_at' => '2020-01-02 11:12:00',
             ],
-        ])->when($selected)->map(function ($item) use ($selected) {
+        ])->when($selected[0] !== '*')->map(function ($item) use ($selected) {
             return Arr::only($item, array_merge(['id'], $selected));
         })->all();
     }
