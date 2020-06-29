@@ -2,15 +2,21 @@
 
 namespace App\JDOs;
 
+use Illuminate\Support\Arr;
+
 class JDO extends \PDOStatement
 {
+    protected $query = '';
+
     public function prepare($query)
     {
         dump(compact('query'));
+        $this->query = $query;
+
         return $this;
     }
 
-    public function bindValue($parameter, $value, $data_type = 2|1)
+    public function bindValue($parameter, $value, $data_type = 2 | 1)
     {
         dump(compact('parameter', 'value', 'data_type'));
     }
@@ -26,11 +32,17 @@ class JDO extends \PDOStatement
         return 1;
     }
 
-    public function fetchAll($fetch_style = null, $fetch_argument = null, array $ctor_args = null)
+    /**
+     * @param null $fetch_style
+     * @param null $fetch_argument
+     * @param null $ctor_args
+     * @return array|array[]
+     */
+    public function fetchAll($fetch_style = null, $fetch_argument = null, $ctor_args = null)
     {
-        dump(compact('fetch_style', 'fetch_argument', 'ctor_args'));
+        $selected = json_decode(ltrim($this->query, 'select'), true);
 
-        return [
+        return collect([
             [
                 'id' => 1,
                 'name' => 'Ninja',
@@ -43,6 +55,8 @@ class JDO extends \PDOStatement
                 'created_at' => '2020-01-02 11:12:00',
                 'updated_at' => '2020-01-02 11:12:00',
             ],
-        ];
+        ])->when($selected)->map(function ($item) use ($selected) {
+            return Arr::only($item, array_merge(['id'], $selected));
+        })->all();
     }
 }

@@ -293,7 +293,7 @@ class JsonGrammar extends Grammars\Grammar
 
     public function compileSelect(Builder $query)
     {
-        return "select['" . implode("','", $query->columns) . "']";
+        return 'select'.json_encode($query->columns);
     }
 
     /**
