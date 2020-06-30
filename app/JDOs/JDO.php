@@ -3,6 +3,7 @@
 namespace App\JDOs;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 
 class JDO extends \PDOStatement
 {
@@ -10,7 +11,6 @@ class JDO extends \PDOStatement
 
     public function prepare($query)
     {
-        dump(compact('query'));
         $this->query = $query;
 
         return $this;
@@ -18,12 +18,20 @@ class JDO extends \PDOStatement
 
     public function bindValue($parameter, $value, $data_type = 2 | 1)
     {
-        dump(compact('parameter', 'value', 'data_type'));
+        return [];
     }
 
     public function execute($input_parameters = null): bool
     {
-        dump(compact('input_parameters'));
+        $data = json_decode(ltrim($this->query, 'insert'), true);
+
+        $jsonData = collect($data['values'])->map(function ($values) use ($data) {
+            return array_combine($data['columns'], array_values($values));
+        })->toJson();
+
+
+        Storage::put('json_db/'.$data['into'].'.json', $jsonData);
+
         return true;
     }
 

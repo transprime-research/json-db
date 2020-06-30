@@ -7,7 +7,6 @@ use App\Schema\JsonBuilder;
 use Illuminate\Database\Connection;
 use App\Query\JsonGrammar as QueryGrammar;
 use App\Schema\JsonGrammar as SchemaGrammar;
-use Illuminate\Database\Schema\SQLiteBuilder;
 
 class JsonConnection extends Connection
 {

@@ -162,6 +162,27 @@ class JsonGrammar extends Grammars\Grammar
         return Str::replaceFirst('insert', 'insert or ignore', $this->compileInsert($query, $values));
     }
 
+    public function compileInsert(Builder $query, array $values)
+    {
+        $table = $this->wrapTable($query->from);
+
+        if (empty($values)) {
+            return 'insert{"into":'.$table.', "columns": [], "values": []}"';
+        }
+
+        if (! is_array(reset($values))) {
+            $values = [$values];
+        }
+
+        $columns = json_encode(array_keys($values[0]));
+
+        $parameters = collect($values)->map(function ($record, $key) {
+            return json_encode(array_values($record), JSON_FORCE_OBJECT);
+        })->implode(',');
+
+        return 'insert{"into":'.$table.', "columns":'.$columns.', "values":['.$parameters.']}';
+    }
+
     /**
      * Compile the columns for an update statement.
      *
