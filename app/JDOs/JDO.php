@@ -4,6 +4,7 @@ namespace App\JDOs;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class JDO extends \PDOStatement
 {
@@ -26,10 +27,13 @@ class JDO extends \PDOStatement
         $data = json_decode(ltrim($this->query, 'insert'), true);
 
         if ($data) {
-
             $jsonData = collect($data['values'])->map(function ($values) use ($data) {
-                return array_combine($data['columns'], array_values($values));
-            })->toJson();
+                $data['values'] = array_values($values);
+                $data['values'][] = $this->getNextId($data['into']);
+                $data['columns'][] = $this->getKeyName();
+
+                return array_combine($data['columns'], $data['values']);
+            })->merge($this->getAllData($data['into']))->values()->toJson();
 
             Storage::put('json_db/' . $data['into'] . '.json', $jsonData);
         }
@@ -37,9 +41,36 @@ class JDO extends \PDOStatement
         return true;
     }
 
+    private function getFilePath(string $table)
+    {
+        return 'json_db/' . $table . '.json';
+    }
+
+    private function getNextId(string $table)
+    {
+        return Str::random();
+    }
+
+    private function getKeyName()
+    {
+        return 'id';
+    }
+
     public function lastInsertId()
     {
         return 1;
+    }
+
+    private function getAllData(?string $table, array $selected = ['*'])
+    {
+        $fileData = json_decode(Storage::get($this->getFilePath($table ?: 'users')), true);
+
+        return collect($fileData)
+            ->when($selected[0] !== '*')
+            ->map(function ($item) use ($selected) {
+                return Arr::only($item, array_merge(['id'], $selected));
+            })
+            ->all();
     }
 
     /**
@@ -52,21 +83,6 @@ class JDO extends \PDOStatement
     {
         $selected = json_decode(ltrim($this->query, 'select'), true);
 
-        return collect([
-            [
-                'id' => 1,
-                'name' => 'Ninja',
-                'created_at' => '2020-01-02 11:12:00',
-                'updated_at' => '2020-01-02 11:12:00',
-            ],
-            [
-                'id' => 2,
-                'name' => 'Ninja 2',
-                'created_at' => '2020-01-02 11:12:00',
-                'updated_at' => '2020-01-02 11:12:00',
-            ],
-        ])->when($selected[0] !== '*')->map(function ($item) use ($selected) {
-            return Arr::only($item, array_merge(['id'], $selected));
-        })->all();
+        return $this->getAllData(null, $selected);
     }
 }
