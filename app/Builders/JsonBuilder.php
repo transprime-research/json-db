@@ -26,7 +26,6 @@ class JsonBuilder extends Builder
             }
         }
 
-        dd('STOP');
         return $this;
     }
 
