@@ -25,12 +25,14 @@ class JDO extends \PDOStatement
     {
         $data = json_decode(ltrim($this->query, 'insert'), true);
 
-        $jsonData = collect($data['values'])->map(function ($values) use ($data) {
-            return array_combine($data['columns'], array_values($values));
-        })->toJson();
+        if ($data) {
 
+            $jsonData = collect($data['values'])->map(function ($values) use ($data) {
+                return array_combine($data['columns'], array_values($values));
+            })->toJson();
 
-        Storage::put('json_db/'.$data['into'].'.json', $jsonData);
+            Storage::put('json_db/' . $data['into'] . '.json', $jsonData);
+        }
 
         return true;
     }
